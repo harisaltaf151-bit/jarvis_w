@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JARVIS — Personal AI OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@200;300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --hud:#0affcc;--hud2:#00c6ff;--hud3:#ff4d6d;--hud4:#ffe04d;--hud5:#a78bfa;
+  --bg:#03080f;--bg2:#060d18;--bg3:#0a1624;--bg4:#0e1e30;
+  --glass:rgba(10,255,204,0.05);--glassborder:rgba(10,255,204,0.14);
+  --font-mono:'Share Tech Mono',monospace;--font-ui:'Exo 2',sans-serif;
+  --transition: all 0.22s cubic-bezier(.4,0,.2,1);
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:#e2eef5;font-family:var(--font-ui);}
+body::before{
+  content:'';position:fixed;top:0;left:0;width:100%;height:100%;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.05) 2px,rgba(0,0,0,.05) 4px);
+  pointer-events:none;z-index:9999;
+}
+canvas#stars{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;}
+#app{position:relative;z-index:1;display:grid;grid-template-rows:50px 1fr 48px;height:100vh;}
+#topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;border-bottom:0.5px solid var(--glassborder);
+  background:rgba(3,8,15,.85);backdrop-filter:blur(12px);
+}
+.logo{font-family:var(--font-mono);font-size:15px;color:var(--hud);letter-spacing:4px;text-shadow:0 0 12px rgba(10,255,204,.4);}
+.logo span{color:var(--hud2);opacity:.8;}
+.topbar-center{display:flex;gap:20px;align-items:center;}
+.sys-pill{display:flex;align-items:center;gap:6px;padding:3px 10px;border-radius:20px;background:rgba(255,255,255,.03);border:0.5px solid rgba(255,255,255,.06);}
+.dot-pulse{width:6px;height:6px;border-radius:50%;animation:dpulse 2s ease-in-out infinite;}
+.dot-pulse.g{background:var(--hud);box-shadow:0 0 6px var(--hud);}
+.dot-pulse.y{background:var(--hud4);box-shadow:0 0 6px var(--hud4);animation-delay:.4s;}
+.dot-pulse.r{background:var(--hud3);box-shadow:0 0 6px var(--hud3);animation-delay:.8s;}
+@keyframes dpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+.pill-label{font-family:var(--font-mono);font-size:10px;color:rgba(232,244,248,.5);letter-spacing:1px;}
+#clock-display{font-family:var(--font-mono);font-size:12px;color:rgba(0,198,255,.75);letter-spacing:2px;}
+.topbar-right{display:flex;gap:16px;align-items:center;}
+.stat-block{text-align:right;}
+.stat-l{font-family:var(--font-mono);font-size:8px;letter-spacing:1px;color:rgba(232,244,248,.3);text-transform:uppercase;}
+.stat-v{font-family:var(--font-mono);font-size:11px;color:var(--hud);}
+#ws-badge{font-family:var(--font-mono);font-size:9px;padding:2px 8px;border-radius:3px;border:0.5px solid;letter-spacing:1px;}
+#ws-badge.online{color:var(--hud);border-color:rgba(10,255,204,.3);background:rgba(10,255,204,.07);}
+#ws-badge.offline{color:var(--hud3);border-color:rgba(255,77,109,.3);background:rgba(255,77,109,.07);}
+#ws-badge.connecting{color:var(--hud4);border-color:rgba(255,224,77,.3);background:rgba(255,224,77,.07);}
+#ai-badge{font-family:var(--font-mono);font-size:9px;padding:2px 8px;border-radius:3px;border:0.5px solid;letter-spacing:1px;cursor:pointer;transition:var(--transition);}
+#ai-badge.online{color:var(--hud5);border-color:rgba(167,139,250,.3);background:rgba(167,139,250,.07);}
+#ai-badge.offline{color:rgba(232,244,248,.3);border-color:rgba(232,244,248,.1);background:rgba(232,244,248,.03);}
+#ai-badge:hover{opacity:.8;}
+#settings-btn{
+  background:none;border:0.5px solid rgba(255,255,255,.1);color:rgba(232,244,248,.4);
+  width:24px;height:24px;border-radius:4px;cursor:pointer;font-size:11px;
+  display:flex;align-items:center;justify-content:center;transition:var(--transition);
+}
+#settings-btn:hover{color:var(--hud5);border-color:rgba(167,139,250,.3);background:rgba(167,139,250,.07);}
+#main{display:grid;grid-template-columns:210px 1fr 210px;overflow:hidden;height:100%;}
+.sidebar{padding:14px 10px;display:flex;flex-direction:column;gap:6px;border-color:var(--glassborder);border-style:solid;background:rgba(3,8,15,.6);overflow-y:auto;}
+.sidebar.left{border-right-width:0.5px;}
+.sidebar.right{border-left-width:0.5px;}
+.s-section{font-family:var(--font-mono);font-size:8px;letter-spacing:2.5px;color:rgba(10,255,204,.35);padding:8px 4px 3px;text-transform:uppercase;}
+.mod-btn{
+  display:flex;align-items:center;gap:9px;padding:7px 10px;
+  border-radius:6px;border:0.5px solid transparent;background:transparent;
+  cursor:pointer;color:rgba(224,238,245,.5);font-family:var(--font-ui);font-size:12px;
+  width:100%;text-align:left;transition:var(--transition);
+}
+.mod-btn:hover,.mod-btn.active{background:var(--glass);border-color:var(--glassborder);color:var(--hud);}
+.mod-btn .ico{width:17px;text-align:center;font-size:13px;}
+.mod-btn .badge{margin-left:auto;font-family:var(--font-mono);font-size:8px;padding:1px 5px;border-radius:3px;background:rgba(10,255,204,.1);color:var(--hud);}
+.res-card{background:rgba(10,20,32,.5);border:0.5px solid var(--glassborder);border-radius:7px;padding:9px 11px;}
+.res-row{display:flex;align-items:center;margin:4px 0;}
+.res-lbl{font-size:9px;color:rgba(232,244,248,.35);width:28px;}
+.res-bar{flex:1;height:2.5px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;margin:0 7px;}
+.res-fill{height:100%;border-radius:2px;transition:width 1s ease;}
+.res-val{font-family:var(--font-mono);font-size:9px;width:32px;text-align:right;}
+.event-item{display:flex;gap:6px;align-items:flex-start;padding:5px 0;border-bottom:0.5px solid rgba(255,255,255,.04);}
+.event-item:last-child{border-bottom:none;}
+.event-dot{width:5px;height:5px;border-radius:50%;margin-top:4px;flex-shrink:0;}
+.event-title{font-size:11px;color:rgba(232,244,248,.65);flex:1;line-height:1.35;}
+.event-time{font-family:var(--font-mono);font-size:9px;color:rgba(232,244,248,.3);white-space:nowrap;}
+.app-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;}
+.app-tile{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:7px 3px;border-radius:6px;border:0.5px solid transparent;
+  background:transparent;cursor:pointer;transition:var(--transition);
+  font-size:9px;font-family:var(--font-mono);color:rgba(232,244,248,.35);letter-spacing:.3px;
+}
+.app-tile:hover{background:var(--glass);border-color:var(--glassborder);color:var(--hud);}
+.app-tile .aico{font-size:17px;}
+#center{display:flex;flex-direction:column;height:100%;overflow:hidden;}
+#chat-wrap{flex:1;min-height:0;overflow-y:scroll;padding:14px 18px;display:flex;flex-direction:column;gap:9px;}
+#chat-wrap::-webkit-scrollbar{width:6px;}
+#chat-wrap::-webkit-scrollbar-thumb{background:rgba(10,255,204,.3);border-radius:3px;cursor:pointer;}
+#chat-wrap::-webkit-scrollbar-track{background:rgba(255,255,255,.03);}
+#scroll-btn{
+  position:absolute;bottom:130px;right:225px;z-index:100;
+  width:34px;height:34px;border-radius:50%;
+  background:rgba(10,255,204,.15);border:0.5px solid rgba(10,255,204,.4);
+  color:var(--hud);font-size:16px;cursor:pointer;
+  display:none;align-items:center;justify-content:center;
+  transition:all .2s;
+}
+#scroll-btn:hover{background:rgba(10,255,204,.3);}
+#scroll-btn.visible{display:flex;}
+.msg{display:flex;gap:9px;align-items:flex-start;animation:msgIn .25s ease;}
+@keyframes msgIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.msg.user{flex-direction:row-reverse;}
+.av{width:26px;height:26px;border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;}
+.av.j{background:rgba(10,255,204,.08);border:0.5px solid rgba(10,255,204,.2);color:var(--hud);font-family:var(--font-mono);}
+.av.u{background:rgba(255,77,109,.08);border:0.5px solid rgba(255,77,109,.2);color:var(--hud3);font-family:var(--font-mono);}
+.bubble{max-width:76%;padding:8px 12px;border-radius:8px;font-size:13px;line-height:1.65;}
+.bubble.j{background:rgba(10,255,204,.04);border:0.5px solid rgba(10,255,204,.12);color:#c8dce8;}
+.bubble.u{background:rgba(255,77,109,.05);border:0.5px solid rgba(255,77,109,.12);color:#f0ccd4;text-align:right;}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(10,255,204,.1);color:var(--hud);margin:0 2px 3px 0;vertical-align:middle;letter-spacing:.5px;}
+.tag.red{background:rgba(255,77,109,.1);color:var(--hud3);}
+.tag.blue{background:rgba(0,198,255,.1);color:var(--hud2);}
+.tag.yellow{background:rgba(255,224,77,.1);color:var(--hud4);}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+.chip{padding:3px 8px;border-radius:4px;font-size:10px;font-family:var(--font-mono);background:rgba(0,198,255,.07);border:0.5px solid rgba(0,198,255,.15);color:var(--hud2);cursor:pointer;transition:var(--transition);letter-spacing:.3px;}
+.chip:hover{background:rgba(0,198,255,.15);color:#fff;}
+.result-block{margin-top:6px;padding:7px 10px;border-radius:5px;background:rgba(0,0,0,.3);border:0.5px solid rgba(255,255,255,.06);font-family:var(--font-mono);font-size:11px;color:#7fb8cc;max-height:150px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;}
+.typing-dots{display:flex;gap:4px;align-items:center;padding:4px 0;}
+.typing-dots span{width:6px;height:6px;border-radius:50%;background:var(--hud);opacity:.25;animation:td 1.2s ease infinite;}
+.typing-dots span:nth-child(2){animation-delay:.2s;}
+.typing-dots span:nth-child(3){animation-delay:.4s;}
+@keyframes td{0%,100%{opacity:.25;transform:scale(1)}50%{opacity:1;transform:scale(1.3)}}
+#input-area{flex-shrink:0;padding:10px 18px 14px;border-top:0.5px solid var(--glassborder);background:rgba(3,8,15,.7);backdrop-filter:blur(8px);display:flex;flex-direction:column;gap:7px;}
+.qcmds{display:flex;gap:4px;flex-wrap:wrap;}
+.qcmd{padding:2px 8px;border-radius:3px;font-size:9px;font-family:var(--font-mono);background:rgba(255,255,255,.02);border:0.5px solid rgba(255,255,255,.07);color:rgba(232,244,248,.35);cursor:pointer;transition:var(--transition);letter-spacing:.5px;}
+.qcmd:hover{background:var(--glass);border-color:var(--glassborder);color:var(--hud);}
+.input-row{display:flex;gap:6px;align-items:flex-end;}
+#cmd-input{flex:1;background:rgba(10,255,204,.03);border:0.5px solid rgba(10,255,204,.15);border-radius:7px;padding:9px 14px;color:#e2eef5;font-family:var(--font-ui);font-size:13px;outline:none;transition:border-color .2s;resize:none;}
+#cmd-input:focus{border-color:rgba(10,255,204,.38);}
+#cmd-input::placeholder{color:rgba(232,244,248,.2);font-size:12px;}
+.ibtn{width:36px;height:36px;border-radius:6px;border:0.5px solid;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:var(--transition);flex-shrink:0;}
+#btn-send{border-color:rgba(10,255,204,.2);color:var(--hud);}
+#btn-send:hover{background:rgba(10,255,204,.1);border-color:var(--hud);}
+#btn-voice{border-color:rgba(255,77,109,.2);color:var(--hud3);}
+#btn-voice:hover,#btn-voice.listening{background:rgba(255,77,109,.1);border-color:var(--hud3);}
+#btn-voice.listening{animation:glowRed 1s ease-in-out infinite;}
+@keyframes glowRed{0%,100%{box-shadow:0 0 0 0 rgba(255,77,109,.4)}50%{box-shadow:0 0 0 5px rgba(255,77,109,.08)}}
+#btn-brain{border-color:rgba(167,139,250,.2);color:var(--hud5);}
+#btn-brain:hover{background:rgba(167,139,250,.1);border-color:var(--hud5);}
+#footer{display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-top:0.5px solid var(--glassborder);background:rgba(3,8,15,.9);}
+.foot-info{font-family:var(--font-mono);font-size:8px;color:rgba(10,255,204,.25);letter-spacing:1.5px;}
+.scan-bar{width:150px;height:1.5px;background:rgba(255,255,255,.04);border-radius:1px;overflow:hidden;}
+.scan-fill{height:100%;background:linear-gradient(90deg,transparent,var(--hud),transparent);width:30%;animation:scan 2.5s ease-in-out infinite;}
+@keyframes scan{0%{transform:translateX(-200%)}100%{transform:translateX(600%)}}
+#foot-status{font-family:var(--font-mono);font-size:8px;color:rgba(10,255,204,.3);letter-spacing:1px;}
+#toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);font-family:var(--font-mono);font-size:11px;padding:6px 16px;border-radius:4px;border:0.5px solid;letter-spacing:.5px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:9999;}
+
+/* ── CONFIG MODAL ───────────────────────────────────────────────────────────── */
+.config-overlay{
+  position:fixed;top:0;left:0;width:100%;height:100%;z-index:9998;
+  background:rgba(2,5,10,.92);backdrop-filter:blur(16px);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:opacity .35s ease;pointer-events:none;
+}
+.config-overlay.visible{opacity:1;pointer-events:auto;}
+.config-modal{
+  width:620px;max-width:94vw;max-height:90vh;overflow-y:auto;
+  background:rgba(8,16,28,.95);border:0.5px solid var(--glassborder);
+  border-radius:14px;padding:28px 32px 24px;
+  box-shadow:0 0 60px rgba(10,255,204,.06),0 0 1px rgba(10,255,204,.2);
+  transform:scale(.95);transition:transform .35s ease;
+}
+.config-overlay.visible .config-modal{transform:scale(1);}
+.config-modal::-webkit-scrollbar{width:5px;}
+.config-modal::-webkit-scrollbar-thumb{background:rgba(10,255,204,.2);border-radius:3px;}
+.config-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.config-title{font-family:var(--font-mono);font-size:13px;letter-spacing:3px;color:var(--hud);text-transform:uppercase;}
+.config-close{
+  background:none;border:0.5px solid rgba(255,255,255,.1);color:rgba(232,244,248,.3);
+  width:26px;height:26px;border-radius:4px;cursor:pointer;font-size:14px;
+  display:none;align-items:center;justify-content:center;transition:var(--transition);
+}
+.config-close:hover{color:var(--hud3);border-color:rgba(255,77,109,.3);}
+.config-close.show{display:flex;}
+.config-subtitle{font-size:12px;color:rgba(232,244,248,.45);margin-bottom:18px;line-height:1.5;}
+.saved-banner{
+  display:none;margin-bottom:16px;padding:10px 14px;border-radius:8px;
+  background:rgba(167,139,250,.06);border:0.5px solid rgba(167,139,250,.2);
+}
+.saved-banner.show{display:block;}
+.saved-banner-text{font-family:var(--font-mono);font-size:10px;color:rgba(167,139,250,.7);letter-spacing:.5px;margin-bottom:8px;}
+.saved-banner-info{font-size:12px;color:rgba(232,244,248,.6);margin-bottom:10px;}
+.saved-banner-btn{
+  padding:5px 14px;border-radius:5px;border:0.5px solid rgba(10,255,204,.3);
+  background:rgba(10,255,204,.08);color:var(--hud);font-family:var(--font-mono);
+  font-size:10px;letter-spacing:1px;cursor:pointer;transition:var(--transition);
+}
+.saved-banner-btn:hover{background:rgba(10,255,204,.18);border-color:var(--hud);}
+.provider-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px;}
+.provider-card{
+  padding:10px 8px;border-radius:8px;border:0.5px solid rgba(255,255,255,.06);
+  background:rgba(255,255,255,.02);cursor:pointer;text-align:center;
+  transition:var(--transition);
+}
+.provider-card:hover{background:rgba(10,255,204,.04);border-color:rgba(10,255,204,.15);}
+.provider-card.selected{background:rgba(10,255,204,.07);border-color:rgba(10,255,204,.35);box-shadow:0 0 12px rgba(10,255,204,.08);}
+.p-icon{font-size:20px;margin-bottom:3px;}
+.p-name{font-family:var(--font-mono);font-size:10px;color:#e2eef5;letter-spacing:.5px;}
+.p-desc{font-size:8px;color:rgba(232,244,248,.3);margin-top:1px;}
+.config-form{display:none;flex-direction:column;gap:14px;}
+.config-form.show{display:flex;}
+.config-field{display:flex;flex-direction:column;gap:5px;}
+.config-label{font-family:var(--font-mono);font-size:9px;letter-spacing:1.5px;color:rgba(232,244,248,.4);text-transform:uppercase;}
+.config-input,.config-select{
+  padding:9px 12px;border-radius:6px;border:0.5px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.03);color:#e2eef5;font-family:var(--font-ui);font-size:13px;
+  outline:none;transition:border-color .2s;width:100%;
+}
+.config-input:focus,.config-select:focus{border-color:rgba(10,255,204,.3);}
+.config-input::placeholder{color:rgba(232,244,248,.2);}
+.config-select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' stroke='%230affcc' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;}
+.config-select option{background:var(--bg2);color:#e2eef5;}
+.key-hint{font-size:10px;color:rgba(232,244,248,.25);line-height:1.4;}
+.key-hint.warn{color:rgba(255,224,77,.6);}
+.key-hint.error{color:rgba(255,77,109,.7);}
+.key-hint.success{color:rgba(10,255,204,.6);}
+.config-btns{display:flex;gap:8px;margin-top:4px;}
+.config-btn{
+  flex:1;padding:10px 16px;border-radius:7px;border:0.5px solid;
+  font-family:var(--font-mono);font-size:11px;letter-spacing:1px;
+  cursor:pointer;transition:var(--transition);text-align:center;
+}
+.config-btn.primary{border-color:rgba(10,255,204,.35);background:rgba(10,255,204,.1);color:var(--hud);}
+.config-btn.primary:hover:not(:disabled){background:rgba(10,255,204,.2);border-color:var(--hud);box-shadow:0 0 14px rgba(10,255,204,.1);}
+.config-btn.secondary{border-color:rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:rgba(232,244,248,.5);}
+.config-btn.secondary:hover:not(:disabled){background:rgba(255,255,255,.06);color:rgba(232,244,248,.7);}
+.config-btn:disabled{opacity:.35;cursor:not-allowed;}
+.config-status{
+  font-family:var(--font-mono);font-size:10px;letter-spacing:.5px;
+  padding:6px 10px;border-radius:5px;text-align:center;display:none;
+}
+.config-status.show{display:block;}
+.config-status.testing{color:var(--hud4);background:rgba(255,224,77,.06);border:0.5px solid rgba(255,224,77,.15);}
+.config-status.success{color:var(--hud);background:rgba(10,255,204,.06);border:0.5px solid rgba(10,255,204,.15);}
+.config-status.error{color:var(--hud3);background:rgba(255,77,109,.06);border:0.5px solid rgba(255,77,109,.15);}
+.config-warning{
+  margin-top:6px;padding:8px 12px;border-radius:6px;
+  background:rgba(255,224,77,.04);border:0.5px solid rgba(255,224,77,.12);
+  font-size:10px;color:rgba(255,224,77,.55);line-height:1.5;
+}
+.config-warning i{margin-right:4px;}
+.config-note{
+  padding:8px 12px;border-radius:6px;font-size:10px;line-height:1.5;
+  background:rgba(0,198,255,.04);border:0.5px solid rgba(0,198,255,.12);color:rgba(0,198,255,.6);
+}
+.config-note.warn{background:rgba(255,224,77,.04);border-color:rgba(255,224,77,.12);color:rgba(255,224,77,.55);}
+.config-remember{display:flex;align-items:center;gap:8px;margin-top:2px;}
+.config-remember input[type="checkbox"]{accent-color:var(--hud);width:13px;height:13px;cursor:pointer;}
+.config-remember label{font-size:11px;color:rgba(232,244,248,.4);cursor:pointer;}
+.config-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+</style>
+</head>
+<body>
+<canvas id="stars"></canvas>
+
+<!-- ── API Configuration Modal ──────────────────────────────────────────────── -->
+<div class="config-overlay" id="config-overlay">
+  <div class="config-modal">
+    <div class="config-header">
+      <div class="config-title">AI Provider Configuration</div>
+      <button class="config-close" id="config-close" onclick="hideConfigModal()">&times;</button>
+    </div>
+    <div class="config-subtitle">Which AI provider do you want to use? Select a provider, enter your API key, and connect.</div>
+    <div class="saved-banner" id="saved-banner">
+      <div class="saved-banner-text">SAVED CONFIGURATION</div>
+      <div class="saved-banner-info" id="saved-banner-info"></div>
+      <button class="saved-banner-btn" onclick="quickReconnect()">RECONNECT</button>
+    </div>
+    <div class="provider-grid" id="provider-grid"></div>
+    <div class="config-form" id="config-form">
+      <!-- Standard API Key (hidden for Bedrock) -->
+      <div class="config-field" id="field-api-key">
+        <label class="config-label">API Key</label>
+        <input type="password" class="config-input" id="config-key" placeholder="Paste your API key here" autocomplete="off" oninput="onFieldInput()">
+        <div class="key-hint" id="key-hint"></div>
+      </div>
+      <!-- AWS Bedrock fields -->
+      <div class="config-field" id="field-aws-access" style="display:none">
+        <label class="config-label">AWS Access Key ID</label>
+        <input type="text" class="config-input" id="config-aws-access" placeholder="AKIAIOSFODNN7EXAMPLE" autocomplete="off" oninput="onFieldInput()">
+      </div>
+      <div class="config-field" id="field-aws-secret" style="display:none">
+        <label class="config-label">AWS Secret Access Key</label>
+        <input type="password" class="config-input" id="config-aws-secret" placeholder="Your AWS secret access key" autocomplete="off" oninput="onFieldInput()">
+      </div>
+      <div class="config-field" id="field-aws-region" style="display:none">
+        <label class="config-label">AWS Region</label>
+        <select class="config-select" id="config-aws-region">
+          <option value="us-east-1">us-east-1 (N. Virginia)</option>
+          <option value="us-west-2">us-west-2 (Oregon)</option>
+          <option value="eu-west-1">eu-west-1 (Ireland)</option>
+          <option value="eu-west-2">eu-west-2 (London)</option>
+          <option value="eu-central-1">eu-central-1 (Frankfurt)</option>
+          <option value="ap-northeast-1">ap-northeast-1 (Tokyo)</option>
+          <option value="ap-southeast-1">ap-southeast-1 (Singapore)</option>
+          <option value="ap-southeast-2">ap-southeast-2 (Sydney)</option>
+          <option value="ca-central-1">ca-central-1 (Canada)</option>
+          <option value="sa-east-1">sa-east-1 (Sao Paulo)</option>
+        </select>
+      </div>
+      <!-- Azure OpenAI fields -->
+      <div class="config-field" id="field-azure-endpoint" style="display:none">
+        <label class="config-label">Azure Endpoint URL</label>
+        <input type="text" class="config-input" id="config-azure-endpoint" placeholder="https://your-resource.openai.azure.com" autocomplete="off" oninput="onFieldInput()">
+      </div>
+      <div class="config-field" id="field-azure-deployment" style="display:none">
+        <label class="config-label">Deployment Name</label>
+        <input type="text" class="config-input" id="config-azure-deployment" placeholder="e.g. gpt-4o-deployment" autocomplete="off" oninput="onFieldInput()">
+      </div>
+      <!-- Model selection -->
+      <div class="config-field">
+        <label class="config-label">Model</label>
+        <select class="config-select" id="config-model"></select>
+      </div>
+      <!-- CORS / provider note -->
+      <div class="config-note" id="config-cors-note" style="display:none"></div>
+      <div class="config-status" id="config-status"></div>
+      <div class="config-btns">
+        <button class="config-btn secondary" id="btn-test" onclick="onTestConnection()" disabled>Test Connection</button>
+        <button class="config-btn primary" id="btn-connect" onclick="onConnect()" disabled>Connect &amp; Start Chat</button>
+      </div>
+      <div class="config-remember">
+        <input type="checkbox" id="config-remember">
+        <label for="config-remember">Remember settings across sessions (localStorage)</label>
+      </div>
+      <div class="config-warning">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        Browser-side API calls send your key over the network from your browser. Your key is visible in DevTools and network logs. This application does not transmit your key to any third party other than your selected AI provider. Never share your API key or use this on untrusted computers.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+  <div id="topbar">
+    <div class="logo">J.A.R.V.I.S <span>/ OS v3.0</span></div>
+    <div class="topbar-center">
+      <div class="sys-pill"><div class="dot-pulse g"></div><span class="pill-label">NEURAL CORE</span></div>
+      <div class="sys-pill"><div class="dot-pulse y"></div><span class="pill-label">TOOLS: <span id="tool-count">0</span></span></div>
+      <div id="clock-display">00:00:00</div>
+      <div id="ws-badge" class="offline">BACKEND OFFLINE</div>
+      <div id="ai-badge" class="offline" onclick="showConfigModal(true)" title="Click to change AI provider">AI NOT CONFIGURED</div>
+      <button id="settings-btn" onclick="showConfigModal(true)" title="AI Provider Settings"><i class="fa-solid fa-gear"></i></button>
+    </div>
+    <div class="topbar-right">
+      <div class="stat-block"><div class="stat-l">CPU</div><div class="stat-v" id="s-cpu">--</div></div>
+      <div class="stat-block"><div class="stat-l">RAM</div><div class="stat-v" id="s-ram">--</div></div>
+      <div class="stat-block"><div class="stat-l">DISK</div><div class="stat-v" id="s-disk">--</div></div>
+    </div>
+  </div>
+  <div id="main">
+    <div class="sidebar left">
+      <div class="s-section">Modules</div>
+      <button class="mod-btn active" onclick="setModule('ai',this)"><span class="ico">&#129302;</span>AI Command<span class="badge">LIVE</span></button>
+      <button class="mod-btn" onclick="setModule('files',this)"><span class="ico">&#128193;</span>Files</button>
+      <button class="mod-btn" onclick="setModule('apps',this)"><span class="ico">&#9889;</span>App Control</button>
+      <button class="mod-btn" onclick="setModule('browser',this)"><span class="ico">&#127760;</span>Browser</button>
+      <button class="mod-btn" onclick="setModule('email',this)"><span class="ico">&#9993;&#65039;</span>Email</button>
+      <button class="mod-btn" onclick="setModule('calendar',this)"><span class="ico">&#128197;</span>Calendar</button>
+      <button class="mod-btn" onclick="setModule('terminal',this)"><span class="ico">&#9000;&#65039;</span>Terminal</button>
+      <button class="mod-btn" onclick="setModule('system',this)"><span class="ico">&#128202;</span>System</button>
+      <button class="mod-btn" onclick="setModule('screen',this)"><span class="ico">&#128421;&#65039;</span>Screen</button>
+      <div class="s-section">Resources</div>
+      <div class="res-card">
+        <div class="res-row"><span class="res-lbl">CPU</span><div class="res-bar"><div class="res-fill" id="r-cpu" style="width:0%;background:var(--hud)"></div></div><span class="res-val" style="color:var(--hud)" id="rv-cpu">--</span></div>
+        <div class="res-row"><span class="res-lbl">MEM</span><div class="res-bar"><div class="res-fill" id="r-ram" style="width:0%;background:var(--hud2)"></div></div><span class="res-val" style="color:var(--hud2)" id="rv-ram">--</span></div>
+        <div class="res-row"><span class="res-lbl">DISK</span><div class="res-bar"><div class="res-fill" id="r-disk" style="width:0%;background:var(--hud4)"></div></div><span class="res-val" style="color:var(--hud4)" id="rv-disk">--</span></div>
+        <div class="res-row"><span class="res-lbl">GPU</span><div class="res-bar"><div class="res-fill" id="r-gpu" style="width:0%;background:var(--hud5)"></div></div><span class="res-val" style="color:var(--hud5)" id="rv-gpu">N/A</span></div>
+      </div>
+    </div>
+    <div id="center" style="position:relative;">
+      <button id="scroll-btn" onclick="scrollToBottom()" title="Scroll to latest">&darr;</button>
+      <div id="chat-wrap">
+        <div class="msg">
+          <div class="av j">J</div>
+          <div class="bubble j">
+            <span class="tag">SYSTEM ONLINE</span><br>
+            Good day. JARVIS Personal AI OS is initialised. Keep the Python backend running in your terminal. I am now fully connected and will execute real commands on your PC.<br><br>
+            <div class="chips">
+              <span class="chip" onclick="qi('Open Chrome and go to google.com')">&#127760; Open Chrome</span>
+              <span class="chip" onclick="qi('Write an email to boss@company.com about project status')">&#9993;&#65039; Draft Email</span>
+              <span class="chip" onclick="qi('Show recent files from last 3 days')">&#128193; Recent Files</span>
+              <span class="chip" onclick="qi('What apps are running right now?')">&#9889; Running Apps</span>
+              <span class="chip" onclick="qi('Schedule a meeting tomorrow at 10am')">&#128197; Add Event</span>
+              <span class="chip" onclick="qi('Run python code to print system info')">&#128187; Run Python</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="input-area">
+        <div class="qcmds">
+          <span class="qcmd" onclick="qi('Open Spotify')">&#9654; Spotify</span>
+          <span class="qcmd" onclick="qi('Take a screenshot')">&#128248; Screenshot</span>
+          <span class="qcmd" onclick="qi('Search the web for AI news today')">&#128269; Web search</span>
+          <span class="qcmd" onclick="qi('Show disk usage')">&#128190; Disk</span>
+          <span class="qcmd" onclick="qi('List top 10 running processes')">&#128260; Processes</span>
+          <span class="qcmd" onclick="qi('Create a new folder called Projects on Desktop')">&#10133; New folder</span>
+          <span class="qcmd" onclick="qi('Open VS Code')">&#128187; VSCode</span>
+          <span class="qcmd" onclick="qi('Check my inbox')">&#128236; Inbox</span>
+        </div>
+        <div class="input-row">
+          <textarea id="cmd-input" rows="2" autocomplete="off" spellcheck="false" placeholder="Command JARVIS... 'Open Chrome' - 'Create folder on Desktop' - 'Show CPU usage' - 'Run Python code'"></textarea>
+          <button class="ibtn" id="btn-brain" title="AI Brain" onclick="sendAI()"><i class="fa-solid fa-brain"></i></button>
+          <button class="ibtn" id="btn-voice" title="Voice Command" onclick="toggleVoice()"><i class="fa-solid fa-microphone"></i></button>
+          <button class="ibtn" id="btn-send" title="Send" onclick="sendAI()"><i class="fa-solid fa-arrow-up"></i></button>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar right">
+      <div class="s-section">Quick Launch</div>
+      <div class="app-grid">
+        <div class="app-tile" onclick="qi('Open VS Code')"><span class="aico">&#128187;</span>VSCode</div>
+        <div class="app-tile" onclick="qi('Open Chrome')"><span class="aico">&#127760;</span>Chrome</div>
+        <div class="app-tile" onclick="qi('Open Notion')"><span class="aico">&#128221;</span>Notion</div>
+        <div class="app-tile" onclick="qi('Open Spotify')"><span class="aico">&#127925;</span>Spotify</div>
+        <div class="app-tile" onclick="qi('Open Terminal')"><span class="aico">&#9000;&#65039;</span>Terminal</div>
+        <div class="app-tile" onclick="qi('Open Figma')"><span class="aico">&#127912;</span>Figma</div>
+        <div class="app-tile" onclick="qi('Open Slack')"><span class="aico">&#128172;</span>Slack</div>
+        <div class="app-tile" onclick="qi('Open Discord')"><span class="aico">&#127918;</span>Discord</div>
+        <div class="app-tile" onclick="qi('Open Calculator')"><span class="aico">&#128290;</span>Calc</div>
+      </div>
+      <div class="s-section" style="margin-top:8px">Today</div>
+      <div class="res-card">
+        <div id="today-events">
+          <div class="event-item" style="cursor:pointer" onclick="qi('Show today\'s calendar events')">
+            <div class="event-dot" style="background:var(--hud)"></div>
+            <div class="event-title" style="color:rgba(10,255,204,.4);font-size:10px">Click to load events</div>
+          </div>
+        </div>
+      </div>
+      <div class="s-section">Inbox</div>
+      <div class="res-card" id="inbox-preview">
+        <div class="event-item"><div class="event-dot" style="background:var(--hud3)"></div><div class="event-title">Connect backend to load emails</div></div>
+      </div>
+      <div class="s-section">Battery</div>
+      <div class="res-card">
+        <div style="font-family:var(--font-mono);font-size:11px;color:var(--hud)" id="battery-info">--</div>
+      </div>
+    </div>
+  </div>
+  <div id="footer">
+    <span class="foot-info">JARVIS AI OS &middot; WS:8765 &middot; HTTP:8766 &middot; <span id="foot-provider">NOT CONFIGURED</span></span>
+    <div class="scan-bar"><div class="scan-fill"></div></div>
+    <span id="foot-status">READY</span>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════════════
+//  PROVIDERS — every entry fully defines how to call that provider's API
+// ══════════════════════════════════════════════════════════════════════════════
+const PROVIDERS = {
+  openai: {
+    name: 'OpenAI', icon: '\u{1F916}', desc: 'GPT-4o, GPT-4, o1',
+    type: 'openai',
+    endpoint: 'https://api.openai.com/v1/chat/completions',
+    testEndpoint: 'https://api.openai.com/v1/models',
+    models: ['gpt-4o','gpt-4o-mini','gpt-4-turbo','gpt-3.5-turbo','o1-mini'],
+    defaultModel: 'gpt-4o-mini',
+    keyPrefix: ['sk-'],
+    supportsJsonFormat: true,
+    corsNote: null,
+  },
+  anthropic: {
+    name: 'Claude', icon: '\u{1F9E0}', desc: 'Sonnet, Opus, Haiku',
+    type: 'anthropic',
+    endpoint: 'https://api.anthropic.com/v1/messages',
+    testEndpoint: null,
+    models: ['claude-sonnet-4-6-20250514','claude-opus-4-6-20250626','claude-haiku-4-5-20251001'],
+    defaultModel: 'claude-sonnet-4-6-20250514',
+    keyPrefix: ['sk-ant-'],
+    supportsJsonFormat: false,
+    corsNote: null,
+  },
+  gemini: {
+    name: 'Gemini', icon: '✨', desc: 'Flash, Pro',
+    type: 'gemini',
+    endpoint: 'https://generativelanguage.googleapis.com/v1beta',
+    testEndpoint: 'https://generativelanguage.googleapis.com/v1beta/models',
+    models: ['gemini-2.0-flash','gemini-1.5-flash','gemini-1.5-pro'],
+    defaultModel: 'gemini-2.0-flash',
+    keyPrefix: ['AIza'],
+    supportsJsonFormat: true,
+    corsNote: null,
+  },
+  groq: {
+    name: 'Groq', icon: '⚡', desc: 'Llama, Mixtral, Gemma',
+    type: 'openai',
+    endpoint: 'https://api.groq.com/openai/v1/chat/completions',
+    testEndpoint: 'https://api.groq.com/openai/v1/models',
+    models: ['llama-3.3-70b-versatile','llama-3.1-8b-instant','mixtral-8x7b-32768','gemma2-9b-it'],
+    defaultModel: 'llama-3.3-70b-versatile',
+    keyPrefix: ['gsk_'],
+    supportsJsonFormat: true,
+    corsNote: null,
+  },
+  deepseek: {
+    name: 'DeepSeek', icon: '\u{1F30A}', desc: 'Chat, Reasoner',
+    type: 'openai',
+    endpoint: 'https://api.deepseek.com/chat/completions',
+    testEndpoint: 'https://api.deepseek.com/models',
+    models: ['deepseek-chat','deepseek-reasoner'],
+    defaultModel: 'deepseek-chat',
+    keyPrefix: ['sk-'],
+    supportsJsonFormat: true,
+    corsNote: null,
+  },
+  openrouter: {
+    name: 'OpenRouter', icon: '\u{1F500}', desc: 'Multi-provider gateway',
+    type: 'openai',
+    endpoint: 'https://openrouter.ai/api/v1/chat/completions',
+    testEndpoint: 'https://openrouter.ai/api/v1/models',
+    models: ['meta-llama/llama-3.3-70b-instruct','anthropic/claude-sonnet-4-6','google/gemini-2.0-flash-exp:free','deepseek/deepseek-chat-v3-0324:free','mistralai/mistral-large-latest'],
+    defaultModel: 'meta-llama/llama-3.3-70b-instruct',
+    keyPrefix: ['sk-or-'],
+    supportsJsonFormat: false,
+    corsNote: null,
+  },
+  bedrock: {
+    name: 'AWS Bedrock', icon: '☁️', desc: 'Claude, Llama, Nova on AWS',
+    type: 'bedrock',
+    endpoint: null,
+    testEndpoint: null,
+    models: ['anthropic.claude-3-5-sonnet-20241022-v2:0','anthropic.claude-3-5-haiku-20241022-v1:0','meta.llama3-3-70b-instruct-v1:0','amazon.nova-pro-v1:0','amazon.nova-lite-v1:0'],
+    defaultModel: 'anthropic.claude-3-5-sonnet-20241022-v2:0',
+    keyPrefix: [],
+    supportsJsonFormat: false,
+    corsNote: 'AWS Bedrock does not support browser CORS. You will likely need a server-side proxy (e.g. your JARVIS Python backend) to relay Bedrock requests. Direct browser calls may be blocked.',
+  },
+  azure: {
+    name: 'Azure OpenAI', icon: '\u{1F537}', desc: 'GPT via Microsoft Azure',
+    type: 'azure',
+    endpoint: null,
+    testEndpoint: null,
+    models: ['gpt-4o','gpt-4o-mini','gpt-4-turbo','gpt-35-turbo'],
+    defaultModel: 'gpt-4o',
+    keyPrefix: [],
+    supportsJsonFormat: true,
+    corsNote: 'Azure OpenAI requires CORS to be enabled on your Azure resource. Go to Azure Portal > Your OpenAI Resource > Networking to add your domain to the allowed origins.',
+  },
+  mistral: {
+    name: 'Mistral AI', icon: '\u{1F32C}️', desc: 'Large, Nemo, Codestral',
+    type: 'openai',
+    endpoint: 'https://api.mistral.ai/v1/chat/completions',
+    testEndpoint: 'https://api.mistral.ai/v1/models',
+    models: ['mistral-large-latest','mistral-medium-latest','mistral-small-latest','codestral-latest','open-mistral-nemo'],
+    defaultModel: 'mistral-large-latest',
+    keyPrefix: [],
+    supportsJsonFormat: true,
+    corsNote: null,
+  },
+  together: {
+    name: 'Together AI', icon: '\u{1F91D}', desc: 'Llama, Qwen, Mixtral',
+    type: 'openai',
+    endpoint: 'https://api.together.xyz/v1/chat/completions',
+    testEndpoint: 'https://api.together.xyz/v1/models',
+    models: ['meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo','meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo','Qwen/Qwen2.5-72B-Instruct-Turbo','mistralai/Mixtral-8x7B-Instruct-v0.1'],
+    defaultModel: 'meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo',
+    keyPrefix: [],
+    supportsJsonFormat: true,
+    corsNote: null,
+  },
+  cohere: {
+    name: 'Cohere', icon: '\u{1F9EC}', desc: 'Command R, R+',
+    type: 'cohere',
+    endpoint: 'https://api.cohere.com/v2/chat',
+    testEndpoint: 'https://api.cohere.com/v1/models',
+    models: ['command-r-plus-08-2024','command-r-08-2024','command-r-plus','command-r'],
+    defaultModel: 'command-r-plus-08-2024',
+    keyPrefix: [],
+    supportsJsonFormat: false,
+    corsNote: null,
+  },
+  perplexity: {
+    name: 'Perplexity', icon: '\u{1F52E}', desc: 'Sonar Pro, Sonar',
+    type: 'openai',
+    endpoint: 'https://api.perplexity.ai/chat/completions',
+    testEndpoint: null,
+    models: ['sonar-pro','sonar','sonar-reasoning-pro','sonar-reasoning'],
+    defaultModel: 'sonar-pro',
+    keyPrefix: ['pplx-'],
+    supportsJsonFormat: false,
+    corsNote: null,
+  },
+  xai: {
+    name: 'xAI (Grok)', icon: '\u{1F680}', desc: 'Grok-2, Grok-beta',
+    type: 'openai',
+    endpoint: 'https://api.x.ai/v1/chat/completions',
+    testEndpoint: 'https://api.x.ai/v1/models',
+    models: ['grok-2-latest','grok-2-mini','grok-beta'],
+    defaultModel: 'grok-2-latest',
+    keyPrefix: ['xai-'],
+    supportsJsonFormat: true,
+    corsNote: null,
+  },
+  fireworks: {
+    name: 'Fireworks AI', icon: '\u{1F386}', desc: 'Llama, Mixtral, Qwen',
+    type: 'openai',
+    endpoint: 'https://api.fireworks.ai/inference/v1/chat/completions',
+    testEndpoint: 'https://api.fireworks.ai/inference/v1/models',
+    models: ['accounts/fireworks/models/llama-v3p3-70b-instruct','accounts/fireworks/models/mixtral-8x7b-instruct','accounts/fireworks/models/qwen2p5-72b-instruct'],
+    defaultModel: 'accounts/fireworks/models/llama-v3p3-70b-instruct',
+    keyPrefix: ['fw_'],
+    supportsJsonFormat: true,
+    corsNote: null,
+  },
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════════════════════════════
+const WS_URL  = 'ws://localhost:8765';
+const HTTP_URL = 'http://localhost:8766';
+
+let ws          = null;
+let wsOnline    = false;
+let isListening = false;
+let isBusy      = false;
+let recog       = null;
+let history     = [];
+let msgId       = 0;
+const pending   = {};
+
+let currentProvider  = null;
+let currentModel     = null;
+let apiKey           = '';
+let selectedProvider = null;
+
+let awsAccessKey    = '';
+let awsSecretKey    = '';
+let awsRegion       = 'us-east-1';
+let azureEndpoint   = '';
+let azureDeployment = '';
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  CLOCK
+// ══════════════════════════════════════════════════════════════════════════════
+function tick(){ document.getElementById('clock-display').textContent = new Date().toLocaleTimeString('en-GB',{hour12:false}); }
+setInterval(tick,1000); tick();
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  STARS
+// ══════════════════════════════════════════════════════════════════════════════
+(function(){
+  const c = document.getElementById('stars');
+  const ctx = c.getContext('2d');
+  let stars = [];
+  function resize(){ c.width=window.innerWidth; c.height=window.innerHeight; }
+  resize(); window.addEventListener('resize',resize);
+  for(let i=0;i<120;i++) stars.push({x:Math.random(),y:Math.random(),s:Math.random()*1.2+.2,a:Math.random()*.6+.1,v:Math.random()*.0002+.0001});
+  function draw(){
+    ctx.clearRect(0,0,c.width,c.height);
+    stars.forEach(s=>{
+      s.a += (Math.random()-.5)*.04; s.a=Math.max(.05,Math.min(.7,s.a));
+      ctx.beginPath(); ctx.arc(s.x*c.width,s.y*c.height,s.s,0,Math.PI*2);
+      ctx.fillStyle=`rgba(10,255,204,${s.a*0.5})`; ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  AWS SIGV4 SIGNING (for Bedrock)
+// ══════════════════════════════════════════════════════════════════════════════
+async function sha256Hex(message) {
+  const data = new TextEncoder().encode(message);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function hmacSign(keyBuffer, message) {
+  const cryptoKey = await crypto.subtle.importKey('raw', keyBuffer, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  return await crypto.subtle.sign('HMAC', cryptoKey, new TextEncoder().encode(message));
+}
+
+async function hmacHex(keyBuffer, message) {
+  const sig = await hmacSign(keyBuffer, message);
+  return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function getSignatureKey(secretKey, dateStamp, region, service) {
+  const kDate    = await hmacSign(new TextEncoder().encode('AWS4' + secretKey), dateStamp);
+  const kRegion  = await hmacSign(kDate, region);
+  const kService = await hmacSign(kRegion, service);
+  return await hmacSign(kService, 'aws4_request');
+}
+
+async function bedrockFetch(model, bodyStr) {
+  const host = 'bedrock-runtime.' + awsRegion + '.amazonaws.com';
+  const path = '/model/' + encodeURIComponent(model) + '/converse';
+  const url  = 'https://' + host + path;
+
+  const now      = new Date();
+  const amzDate  = now.toISOString().replace(/[:-]|\.\d{3}/g, '');
+  const dateStamp = amzDate.slice(0, 8);
+  const payloadHash = await sha256Hex(bodyStr);
+
+  const headersToSign = {
+    'content-type': 'application/json',
+    'host': host,
+    'x-amz-content-sha256': payloadHash,
+    'x-amz-date': amzDate,
+  };
+
+  const signedHeaderKeys = Object.keys(headersToSign).sort();
+  const canonicalHeaders = signedHeaderKeys.map(k => k + ':' + headersToSign[k]).join('\n') + '\n';
+  const signedHeaders    = signedHeaderKeys.join(';');
+
+  const canonicalRequest = ['POST', path, '', canonicalHeaders, signedHeaders, payloadHash].join('\n');
+  const credentialScope  = dateStamp + '/' + awsRegion + '/bedrock/aws4_request';
+  const stringToSign     = ['AWS4-HMAC-SHA256', amzDate, credentialScope, await sha256Hex(canonicalRequest)].join('\n');
+
+  const signingKey  = await getSignatureKey(awsSecretKey, dateStamp, awsRegion, 'bedrock');
+  const signature   = await hmacHex(signingKey, stringToSign);
+  const authorization = 'AWS4-HMAC-SHA256 Credential=' + awsAccessKey + '/' + credentialScope + ', SignedHeaders=' + signedHeaders + ', Signature=' + signature;
+
+  return await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Amz-Date': amzDate,
+      'X-Amz-Content-Sha256': payloadHash,
+      'Authorization': authorization,
+    },
+    body: bodyStr,
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  PROVIDER ADAPTER — builds correct requests and parses responses per type
+// ══════════════════════════════════════════════════════════════════════════════
+const SYSTEM_PROMPT = `CRITICAL: You must respond with ONLY a JSON object. No prose. No explanation. No markdown. No code blocks. The VERY FIRST CHARACTER of your response must be { and the LAST must be }.
+
+You are JARVIS brain. Map user commands to tool calls.
+
+Tools:
+- app: open(app), close(app), list_running(), open_url(url), set_volume(level)
+- files: list_dir(path), search(query,path), read_file(path), write_file(path,content), create_folder(path), copy(src,dst), move(src,dst), delete(path,confirm), recent_files(path,days), zip_folder(path)
+- browser: navigate(url), search(query,engine), screenshot(), new_tab(url), scroll(direction)
+- email: send(to,subject,body), fetch_inbox(count,unread_only), search_emails(query), draft(to,subject,context)
+- system: snapshot(), top_processes(n), disk_usage(), battery(), kill_process(pid)
+- terminal: run(command), run_python(code), install_package(package), open_terminal_window()
+- screen: screenshot(), hotkey(keys), type_text(text), click(x,y)
+- calendar: list_events(days), today(), create_event(title,start,end), search(query), quick_add(natural)
+
+Rules:
+- "open spotify/chrome/vscode/discord/etc" -> {"tool":"app","action":"open","params":{"app":"spotify"}}
+- "create folder X on desktop" -> {"tool":"files","action":"create_folder","params":{"path":"C:/Users/PC/Desktop/X"}}
+- "running apps/processes/what is open" -> {"tool":"system","action":"top_processes","params":{"n":10}}
+- "screenshot" -> {"tool":"screen","action":"screenshot","params":{}}
+- "cpu/ram/system stats" -> {"tool":"system","action":"snapshot","params":{}}
+- "run python [code]" -> {"tool":"terminal","action":"run_python","params":{"code":"..."}}
+- NEVER chain more than 1 action at a time for app open commands
+- Pure chat (no action needed) -> {"speech":"...","actions":[]}
+
+REQUIRED JSON FORMAT (start with { end with }):
+{"speech":"JARVIS reply here","actions":[{"tool":"X","action":"Y","params":{}}]}`;
+
+function buildHeaders(providerId, key) {
+  const p = PROVIDERS[providerId];
+  switch (p.type) {
+    case 'openai': {
+      const h = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key };
+      if (providerId === 'openrouter') {
+        h['HTTP-Referer'] = window.location.href;
+        h['X-Title'] = 'JARVIS AI OS';
+      }
+      return h;
+    }
+    case 'anthropic':
+      return {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      };
+    case 'gemini':
+      return { 'Content-Type': 'application/json' };
+    case 'azure':
+      return { 'Content-Type': 'application/json', 'api-key': key };
+    case 'cohere':
+      return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key };
+    case 'bedrock':
+      return null;
+  }
+}
+
+function buildRequestBody(providerId, model, messages, systemPrompt) {
+  const p = PROVIDERS[providerId];
+  switch (p.type) {
+    case 'openai':
+    case 'azure': {
+      const body = {
+        model: model,
+        messages: [{ role: 'system', content: systemPrompt }, ...messages],
+        max_tokens: 1024,
+        temperature: 0.2,
+      };
+      if (p.supportsJsonFormat) body.response_format = { type: 'json_object' };
+      return body;
+    }
+    case 'anthropic':
+      return {
+        model: model,
+        system: systemPrompt,
+        messages: messages.map(m => ({ role: m.role, content: m.content })),
+        max_tokens: 1024,
+        temperature: 0.2,
+      };
+    case 'gemini':
+      return {
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents: messages.map(m => ({
+          role: m.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: m.content }],
+        })),
+        generationConfig: {
+          temperature: 0.2,
+          maxOutputTokens: 1024,
+          responseMimeType: 'application/json',
+        },
+      };
+    case 'cohere':
+      return {
+        model: model,
+        messages: [{ role: 'system', content: systemPrompt }, ...messages.map(m => ({ role: m.role, content: m.content }))],
+        max_tokens: 1024,
+        temperature: 0.2,
+      };
+    case 'bedrock':
+      return {
+        messages: messages.map(m => ({ role: m.role, content: [{ text: m.content }] })),
+        system: [{ text: systemPrompt }],
+        inferenceConfig: { maxTokens: 1024, temperature: 0.2 },
+      };
+  }
+}
+
+function getRequestUrl(providerId, model, key) {
+  const p = PROVIDERS[providerId];
+  if (p.type === 'gemini') {
+    return p.endpoint + '/models/' + model + ':generateContent?key=' + encodeURIComponent(key);
+  }
+  if (p.type === 'azure') {
+    const base = azureEndpoint.replace(/\/+$/, '');
+    return base + '/openai/deployments/' + encodeURIComponent(azureDeployment) + '/chat/completions?api-version=2024-08-01-preview';
+  }
+  if (p.type === 'bedrock') {
+    return 'https://bedrock-runtime.' + awsRegion + '.amazonaws.com/model/' + encodeURIComponent(model) + '/converse';
+  }
+  return p.endpoint;
+}
+
+function parseResponseContent(providerId, data) {
+  const p = PROVIDERS[providerId];
+  switch (p.type) {
+    case 'openai':
+    case 'azure':
+      return data.choices?.[0]?.message?.content || '';
+    case 'anthropic':
+      return data.content?.[0]?.text || '';
+    case 'gemini': {
+      const candidate = data.candidates?.[0];
+      if (!candidate) {
+        if (data.promptFeedback?.blockReason) throw new Error('Gemini blocked the request: ' + data.promptFeedback.blockReason);
+        throw new Error('Gemini returned no response candidates.');
+      }
+      if (candidate.finishReason === 'SAFETY') throw new Error('Gemini blocked the response due to safety filters.');
+      return candidate.content?.parts?.[0]?.text || '';
+    }
+    case 'cohere': {
+      const msg = data.message;
+      if (!msg) throw new Error('Cohere returned no message.');
+      if (msg.content && Array.isArray(msg.content)) {
+        const textPart = msg.content.find(c => c.type === 'text');
+        return textPart?.text || '';
+      }
+      return typeof msg.content === 'string' ? msg.content : '';
+    }
+    case 'bedrock':
+      return data.output?.message?.content?.[0]?.text || '';
+  }
+}
+
+function formatProviderError(providerId, status, data) {
+  const name = PROVIDERS[providerId].name;
+  if (status === 0 || !status) return 'Network error connecting to ' + name + '. This may be a CORS restriction or network issue. If using AWS Bedrock or Azure, you may need a server-side proxy.';
+  if (status === 401 || status === 403) return 'Invalid API key or credentials for ' + name + '. Please check your key in Settings and try again.';
+  if (status === 402) return 'Insufficient credits for ' + name + '. Please check your account balance or billing settings.';
+  if (status === 404) {
+    const apiMsg = extractApiMessage(data);
+    if (apiMsg && apiMsg.toLowerCase().includes('model')) return 'The model "' + currentModel + '" is not available for ' + name + '. Please choose another model in Settings.';
+    return 'Endpoint not found for ' + name + '. The API endpoint or deployment name may be incorrect.';
+  }
+  if (status === 429) return 'Rate limit exceeded for ' + name + '. Please wait a moment and try again, or check your plan\'s usage limits.';
+  if (status === 400) {
+    const apiMsg = extractApiMessage(data);
+    if (apiMsg) {
+      if (apiMsg.toLowerCase().includes('model')) return 'The selected model is not available for ' + name + '. ' + apiMsg;
+      return name + ' rejected the request: ' + apiMsg;
+    }
+    return name + ' rejected the request. Check that your selected model is valid.';
+  }
+  if (status === 408 || status === 504) return name + ' request timed out. The service may be under heavy load. Please try again.';
+  if (status >= 500) return name + ' is temporarily unavailable (HTTP ' + status + '). Please try again later.';
+  const apiMsg = extractApiMessage(data);
+  return name + ' returned an error (HTTP ' + status + ')' + (apiMsg ? ': ' + apiMsg : '.');
+}
+
+function extractApiMessage(data) {
+  if (!data) return '';
+  if (data.error?.message) return data.error.message;
+  if (data.error?.error?.message) return data.error.error.message;
+  if (typeof data.error === 'string') return data.error;
+  if (data.message) return data.message;
+  return '';
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  PROVIDER AUTO-DETECTION
+// ══════════════════════════════════════════════════════════════════════════════
+function detectProviderFromKey(key) {
+  if (!key || key.length < 4) return null;
+  if (key.startsWith('sk-ant-')) return 'anthropic';
+  if (key.startsWith('gsk_')) return 'groq';
+  if (key.startsWith('sk-or-')) return 'openrouter';
+  if (key.startsWith('AIza')) return 'gemini';
+  if (key.startsWith('pplx-')) return 'perplexity';
+  if (key.startsWith('xai-')) return 'xai';
+  if (key.startsWith('fw_')) return 'fireworks';
+  if (key.startsWith('sk-')) return 'openai';
+  return null;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  CONNECTION TESTING
+// ══════════════════════════════════════════════════════════════════════════════
+async function testConnection(providerId, key, model) {
+  const p = PROVIDERS[providerId];
+  try {
+    if (p.type === 'openai' && p.testEndpoint) {
+      const r = await fetch(p.testEndpoint, { headers: buildHeaders(providerId, key) });
+      if (!r.ok) { const d = await r.json().catch(() => ({})); return { ok: false, error: formatProviderError(providerId, r.status, d) }; }
+      return { ok: true };
+    }
+    if (p.type === 'anthropic') {
+      const r = await fetch(p.endpoint, {
+        method: 'POST',
+        headers: buildHeaders(providerId, key),
+        body: JSON.stringify({ model: model, max_tokens: 1, messages: [{ role: 'user', content: 'hi' }] }),
+      });
+      if (!r.ok) { const d = await r.json().catch(() => ({})); return { ok: false, error: formatProviderError(providerId, r.status, d) }; }
+      return { ok: true };
+    }
+    if (p.type === 'gemini') {
+      const r = await fetch(p.testEndpoint + '?key=' + encodeURIComponent(key));
+      if (!r.ok) { const d = await r.json().catch(() => ({})); return { ok: false, error: formatProviderError(providerId, r.status, d) }; }
+      return { ok: true };
+    }
+    if (p.type === 'azure') {
+      const ep = document.getElementById('config-azure-endpoint').value.trim().replace(/\/+$/, '');
+      const dep = document.getElementById('config-azure-deployment').value.trim();
+      if (!ep || !dep) return { ok: false, error: 'Please enter your Azure endpoint URL and deployment name.' };
+      const url = ep + '/openai/deployments/' + encodeURIComponent(dep) + '/chat/completions?api-version=2024-08-01-preview';
+      const r = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'api-key': key },
+        body: JSON.stringify({ model: model, max_tokens: 1, messages: [{ role: 'user', content: 'hi' }] }),
+      });
+      if (!r.ok) { const d = await r.json().catch(() => ({})); return { ok: false, error: formatProviderError(providerId, r.status, d) }; }
+      return { ok: true };
+    }
+    if (p.type === 'bedrock') {
+      const ak = document.getElementById('config-aws-access').value.trim();
+      const sk = document.getElementById('config-aws-secret').value.trim();
+      const rg = document.getElementById('config-aws-region').value;
+      if (!ak || !sk) return { ok: false, error: 'Please enter your AWS Access Key ID and Secret Access Key.' };
+      const tmpAccessKey = awsAccessKey; const tmpSecretKey = awsSecretKey; const tmpRegion = awsRegion;
+      awsAccessKey = ak; awsSecretKey = sk; awsRegion = rg;
+      try {
+        const bodyStr = JSON.stringify({
+          messages: [{ role: 'user', content: [{ text: 'hi' }] }],
+          inferenceConfig: { maxTokens: 1 },
+        });
+        const r = await bedrockFetch(model, bodyStr);
+        awsAccessKey = tmpAccessKey; awsSecretKey = tmpSecretKey; awsRegion = tmpRegion;
+        if (!r.ok) { const d = await r.json().catch(() => ({})); return { ok: false, error: formatProviderError(providerId, r.status, d) }; }
+        return { ok: true };
+      } catch (e) {
+        awsAccessKey = tmpAccessKey; awsSecretKey = tmpSecretKey; awsRegion = tmpRegion;
+        throw e;
+      }
+    }
+    if (p.type === 'cohere') {
+      const r = await fetch(p.testEndpoint, { headers: buildHeaders(providerId, key) });
+      if (!r.ok) { const d = await r.json().catch(() => ({})); return { ok: false, error: formatProviderError(providerId, r.status, d) }; }
+      return { ok: true };
+    }
+    if (p.type === 'openai' && !p.testEndpoint) {
+      const url = getRequestUrl(providerId, model, key);
+      const r = await fetch(url, {
+        method: 'POST',
+        headers: buildHeaders(providerId, key),
+        body: JSON.stringify({ model: model, max_tokens: 1, messages: [{ role: 'user', content: 'hi' }] }),
+      });
+      if (!r.ok) { const d = await r.json().catch(() => ({})); return { ok: false, error: formatProviderError(providerId, r.status, d) }; }
+      return { ok: true };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: 'Network error: ' + e.message + '. This may be a CORS restriction. Some providers do not support direct browser requests.' };
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  CONFIG MODAL
+// ══════════════════════════════════════════════════════════════════════════════
+function renderProviderGrid() {
+  const grid = document.getElementById('provider-grid');
+  grid.innerHTML = '';
+  for (const [id, p] of Object.entries(PROVIDERS)) {
+    const card = document.createElement('div');
+    card.className = 'provider-card';
+    card.dataset.provider = id;
+    card.onclick = () => selectProvider(id);
+    card.innerHTML = '<div class="p-icon">' + p.icon + '</div><div class="p-name">' + p.name + '</div><div class="p-desc">' + p.desc + '</div>';
+    grid.appendChild(card);
+  }
+}
+
+function selectProvider(id) {
+  selectedProvider = id;
+  document.querySelectorAll('.provider-card').forEach(c => c.classList.toggle('selected', c.dataset.provider === id));
+  const p = PROVIDERS[id];
+
+  const modelSel = document.getElementById('config-model');
+  modelSel.innerHTML = '';
+  p.models.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m; opt.textContent = m + (m === p.defaultModel ? ' (default)' : '');
+    modelSel.appendChild(opt);
+  });
+  modelSel.value = p.defaultModel;
+
+  const isBedrock = (id === 'bedrock');
+  const isAzure   = (id === 'azure');
+  document.getElementById('field-api-key').style.display       = isBedrock ? 'none' : '';
+  document.getElementById('field-aws-access').style.display    = isBedrock ? '' : 'none';
+  document.getElementById('field-aws-secret').style.display    = isBedrock ? '' : 'none';
+  document.getElementById('field-aws-region').style.display    = isBedrock ? '' : 'none';
+  document.getElementById('field-azure-endpoint').style.display    = isAzure ? '' : 'none';
+  document.getElementById('field-azure-deployment').style.display  = isAzure ? '' : 'none';
+
+  const corsNote = document.getElementById('config-cors-note');
+  if (p.corsNote) { corsNote.textContent = p.corsNote; corsNote.className = 'config-note warn'; corsNote.style.display = ''; }
+  else { corsNote.style.display = 'none'; }
+
+  document.getElementById('config-form').classList.add('show');
+  setConfigStatus('');
+  onFieldInput();
+}
+
+function hasRequiredFields() {
+  if (!selectedProvider) return false;
+  if (selectedProvider === 'bedrock') {
+    return !!(document.getElementById('config-aws-access').value.trim() && document.getElementById('config-aws-secret').value.trim());
+  }
+  if (selectedProvider === 'azure') {
+    return !!(document.getElementById('config-key').value.trim() && document.getElementById('config-azure-endpoint').value.trim() && document.getElementById('config-azure-deployment').value.trim());
+  }
+  return !!document.getElementById('config-key').value.trim();
+}
+
+function onFieldInput() {
+  const ready = hasRequiredFields();
+  document.getElementById('btn-test').disabled = !ready;
+  document.getElementById('btn-connect').disabled = !ready;
+
+  const key  = document.getElementById('config-key').value.trim();
+  const hint = document.getElementById('key-hint');
+  if (!key || !selectedProvider || selectedProvider === 'bedrock') { hint.textContent = ''; hint.className = 'key-hint'; return; }
+
+  const detected = detectProviderFromKey(key);
+  if (detected && detected !== selectedProvider) {
+    const detectedName = PROVIDERS[detected].name;
+    const selectedName = PROVIDERS[selectedProvider].name;
+    if (detected === 'openai' && (selectedProvider === 'deepseek' || selectedProvider === 'mistral' || selectedProvider === 'together')) {
+      hint.textContent = 'Note: This key starts with "sk-" which is shared by several providers. Make sure you have the correct provider selected.';
+      hint.className = 'key-hint warn';
+    } else {
+      hint.textContent = 'This key looks like it belongs to ' + detectedName + ', but you selected ' + selectedName + '. Please verify your selection.';
+      hint.className = 'key-hint warn';
+    }
+  } else if (detected) {
+    hint.textContent = 'Key format matches ' + PROVIDERS[detected].name + '.';
+    hint.className = 'key-hint success';
+  } else {
+    hint.textContent = 'Could not auto-detect the provider from this key format. Make sure you have the correct provider selected.';
+    hint.className = 'key-hint';
+  }
+}
+
+async function onTestConnection() {
+  if (!selectedProvider) return;
+  const key   = document.getElementById('config-key').value.trim();
+  const model = document.getElementById('config-model').value;
+  if (!hasRequiredFields()) return;
+
+  setConfigStatus('Testing connection to ' + PROVIDERS[selectedProvider].name + '...', 'testing');
+  document.getElementById('btn-test').disabled = true;
+  document.getElementById('btn-connect').disabled = true;
+
+  const result = await testConnection(selectedProvider, key, model);
+
+  document.getElementById('btn-test').disabled = false;
+  document.getElementById('btn-connect').disabled = false;
+
+  if (result.ok) setConfigStatus('Connection successful! ' + PROVIDERS[selectedProvider].name + ' is reachable and your credentials are valid.', 'success');
+  else setConfigStatus(result.error, 'error');
+}
+
+async function onConnect() {
+  if (!selectedProvider) return;
+  const key   = document.getElementById('config-key').value.trim();
+  const model = document.getElementById('config-model').value;
+  if (!hasRequiredFields()) return;
+
+  setConfigStatus('Connecting to ' + PROVIDERS[selectedProvider].name + '...', 'testing');
+  document.getElementById('btn-test').disabled = true;
+  document.getElementById('btn-connect').disabled = true;
+
+  const result = await testConnection(selectedProvider, key, model);
+
+  if (!result.ok) {
+    document.getElementById('btn-test').disabled = false;
+    document.getElementById('btn-connect').disabled = false;
+    setConfigStatus(result.error, 'error');
+    return;
+  }
+
+  if (selectedProvider === 'bedrock') {
+    awsAccessKey = document.getElementById('config-aws-access').value.trim();
+    awsSecretKey = document.getElementById('config-aws-secret').value.trim();
+    awsRegion    = document.getElementById('config-aws-region').value;
+  }
+  if (selectedProvider === 'azure') {
+    azureEndpoint   = document.getElementById('config-azure-endpoint').value.trim().replace(/\/+$/, '');
+    azureDeployment = document.getElementById('config-azure-deployment').value.trim();
+  }
+
+  applyConfig(selectedProvider, key, model);
+  saveConfig(document.getElementById('config-remember').checked);
+  hideConfigModal();
+  showToast('Connected to ' + PROVIDERS[selectedProvider].name + ' · ' + model, 'green');
+}
+
+function quickReconnect() {
+  const saved = loadConfig();
+  if (!saved) return;
+  if (saved.awsAccessKey) { awsAccessKey = saved.awsAccessKey; awsSecretKey = saved.awsSecretKey; awsRegion = saved.awsRegion || 'us-east-1'; }
+  if (saved.azureEndpoint) { azureEndpoint = saved.azureEndpoint; azureDeployment = saved.azureDeployment || ''; }
+  applyConfig(saved.provider, saved.key, saved.model);
+  hideConfigModal();
+  showToast('Reconnected to ' + PROVIDERS[saved.provider].name + ' · ' + saved.model, 'green');
+}
+
+function applyConfig(providerId, key, model) {
+  currentProvider = providerId;
+  apiKey = key;
+  currentModel = model;
+  updateProviderDisplay();
+}
+
+function updateProviderDisplay() {
+  const badge  = document.getElementById('ai-badge');
+  const footer = document.getElementById('foot-provider');
+  if (currentProvider && PROVIDERS[currentProvider]) {
+    const p = PROVIDERS[currentProvider];
+    const shortModel = currentModel.split('/').pop().split('-').slice(0, 2).join('-');
+    badge.className = 'online'; badge.id = 'ai-badge';
+    badge.textContent = p.icon + ' ' + p.name + ' · ' + shortModel;
+    footer.textContent = p.name.toUpperCase() + ' · ' + currentModel.toUpperCase();
+  } else {
+    badge.className = 'offline'; badge.id = 'ai-badge';
+    badge.textContent = 'AI NOT CONFIGURED';
+    footer.textContent = 'NOT CONFIGURED';
+  }
+}
+
+function setConfigStatus(msg, type) {
+  const el = document.getElementById('config-status');
+  if (!msg) { el.className = 'config-status'; el.textContent = ''; return; }
+  el.className = 'config-status show ' + (type || '');
+  el.textContent = msg;
+}
+
+function showConfigModal(dismissable) {
+  const overlay  = document.getElementById('config-overlay');
+  const closeBtn = document.getElementById('config-close');
+  closeBtn.classList.toggle('show', !!dismissable);
+
+  const saved  = loadConfig();
+  const banner = document.getElementById('saved-banner');
+  if (saved && PROVIDERS[saved.provider]) {
+    const p = PROVIDERS[saved.provider];
+    const keyHint = saved.provider === 'bedrock' ? ('AWS · ' + (saved.awsRegion || 'us-east-1')) : ('Key: ••••' + saved.key.slice(-4));
+    document.getElementById('saved-banner-info').textContent = p.icon + ' ' + p.name + ' · ' + saved.model + ' · ' + keyHint;
+    banner.classList.add('show');
+  } else {
+    banner.classList.remove('show');
+  }
+
+  if (currentProvider) {
+    selectProvider(currentProvider);
+    document.getElementById('config-key').value = apiKey;
+    document.getElementById('config-model').value = currentModel;
+    if (currentProvider === 'bedrock') {
+      document.getElementById('config-aws-access').value = awsAccessKey;
+      document.getElementById('config-aws-secret').value = awsSecretKey;
+      document.getElementById('config-aws-region').value = awsRegion;
+    }
+    if (currentProvider === 'azure') {
+      document.getElementById('config-azure-endpoint').value = azureEndpoint;
+      document.getElementById('config-azure-deployment').value = azureDeployment;
+    }
+  } else if (saved && PROVIDERS[saved.provider]) {
+    selectProvider(saved.provider);
+    document.getElementById('config-key').value = saved.key || '';
+    if (saved.provider === 'bedrock') {
+      document.getElementById('config-aws-access').value = saved.awsAccessKey || '';
+      document.getElementById('config-aws-secret').value = saved.awsSecretKey || '';
+      document.getElementById('config-aws-region').value = saved.awsRegion || 'us-east-1';
+    }
+    if (saved.provider === 'azure') {
+      document.getElementById('config-azure-endpoint').value = saved.azureEndpoint || '';
+      document.getElementById('config-azure-deployment').value = saved.azureDeployment || '';
+    }
+    if (saved.model) {
+      const modelSel = document.getElementById('config-model');
+      if ([...modelSel.options].some(o => o.value === saved.model)) modelSel.value = saved.model;
+    }
+  }
+
+  setConfigStatus('');
+  overlay.classList.add('visible');
+}
+
+function hideConfigModal() {
+  document.getElementById('config-overlay').classList.remove('visible');
+}
+
+// ── PERSIST ─────────────────────────────────────────────────────────────────
+function saveConfig(usePersistent) {
+  const data = JSON.stringify({
+    provider: currentProvider, key: apiKey, model: currentModel,
+    awsAccessKey: awsAccessKey, awsSecretKey: awsSecretKey, awsRegion: awsRegion,
+    azureEndpoint: azureEndpoint, azureDeployment: azureDeployment,
+  });
+  sessionStorage.setItem('jarvis_ai_config', data);
+  if (usePersistent) localStorage.setItem('jarvis_ai_config', data);
+}
+
+function loadConfig() {
+  const raw = sessionStorage.getItem('jarvis_ai_config') || localStorage.getItem('jarvis_ai_config');
+  if (!raw) return null;
+  try {
+    const cfg = JSON.parse(raw);
+    if (cfg.provider && PROVIDERS[cfg.provider]) return cfg;
+  } catch(e) {}
+  return null;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  WEBSOCKET
+// ══════════════════════════════════════════════════════════════════════════════
+function wsConnect(){
+  setWsBadge('connecting','CONNECTING...');
+  try{
+    ws = new WebSocket(WS_URL);
+    ws.onopen = () => {
+      wsOnline = true; setWsBadge('online','BACKEND ONLINE');
+      document.getElementById('tool-count').textContent = '8';
+      setFootStatus('BACKEND CONNECTED');
+      showToast('Backend connected — real commands active!','green');
+    };
+    ws.onmessage = e => {
+      const msg = JSON.parse(e.data);
+      if(msg.type === 'welcome') updateSystemStats(msg.system);
+      if(msg.type === 'system_stats') updateSystemStats(msg);
+      if(msg.type === 'result'){ const cb = pending[msg.id]; if(cb){ cb(msg); delete pending[msg.id]; } }
+    };
+    ws.onclose = () => {
+      wsOnline = false; setWsBadge('offline','BACKEND OFFLINE');
+      document.getElementById('tool-count').textContent = '0';
+      setTimeout(wsConnect, 4000);
+    };
+    ws.onerror = () => { ws.close(); };
+  } catch(e){ setTimeout(wsConnect,4000); }
+}
+
+function wsSend(tool, action, params, id){
+  return new Promise(resolve => {
+    if(!wsOnline){ resolve({ok:false,error:'Backend offline — start: python jarvis.py'}); return; }
+    pending[id] = resolve;
+    try{ ws.send(JSON.stringify({type:'command', id, tool, action, params})); }
+    catch(e){ delete pending[id]; resolve({ok:false,error:'WebSocket send failed: '+e.message}); return; }
+    setTimeout(()=>{ if(pending[id]){ delete pending[id]; resolve({ok:false,error:'Timeout after 60s'}); } },60000);
+  });
+}
+
+function setWsBadge(cls,txt){ const b = document.getElementById('ws-badge'); b.className = cls; b.textContent = txt; }
+
+function updateSystemStats(s){
+  if(!s) return;
+  const cpu = s.cpu_percent||0, ramP = s.ram_percent||0, disk = s.disk_percent||0;
+  document.getElementById('s-cpu').textContent  = cpu+'%';
+  document.getElementById('s-ram').textContent  = (s.ram_used_gb||0)+'GB';
+  document.getElementById('s-disk').textContent = (s.disk_used_gb||0)+'GB';
+  document.getElementById('r-cpu').style.width  = cpu+'%';  document.getElementById('rv-cpu').textContent  = cpu+'%';
+  document.getElementById('r-ram').style.width  = ramP+'%'; document.getElementById('rv-ram').textContent  = ramP+'%';
+  document.getElementById('r-disk').style.width = disk+'%'; document.getElementById('rv-disk').textContent = disk+'%';
+  if(s.battery){
+    const b = s.battery;
+    document.getElementById('battery-info').textContent = b.percent ? b.percent+'% '+(b.plugged_in?'⚡ Charging':'\u{1F50B}') : (b.status||'–');
+  }
+}
+
+setInterval(()=>{ if(wsOnline && ws) ws.send(JSON.stringify({type:'system_stats'})); },5000);
+
+function isAtBottom(){ const w = document.getElementById('chat-wrap'); return w.scrollHeight - w.scrollTop - w.clientHeight < 80; }
+function scrollToBottom(){ const w = document.getElementById('chat-wrap'); w.scrollTop = w.scrollHeight; document.getElementById('scroll-btn').classList.remove('visible'); }
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  CHAT HELPERS
+// ══════════════════════════════════════════════════════════════════════════════
+function addMsg(role, html, resultText){
+  const wrap = document.getElementById('chat-wrap');
+  const div  = document.createElement('div');
+  div.className = 'msg'+(role==='user'?' user':'');
+  const avCls = role==='user'?'u':'j', bubCls = role==='user'?'u':'j', avTxt = role==='user'?'YOU':'J';
+  let extra = resultText ? '<div class="result-block">'+escHtml(resultText)+'</div>' : '';
+  div.innerHTML = '<div class="av '+avCls+'">'+avTxt+'</div><div class="bubble '+bubCls+'">'+html+extra+'</div>';
+  wrap.appendChild(div); scrollToBottom(); return div;
+}
+
+function addTyping(){
+  const wrap = document.getElementById('chat-wrap');
+  const div  = document.createElement('div');
+  div.id = 'typing'; div.className = 'msg';
+  div.innerHTML = '<div class="av j">J</div><div class="bubble j"><div class="typing-dots"><span></span><span></span><span></span></div></div>';
+  wrap.appendChild(div); scrollToBottom();
+}
+function removeTyping(){ const t=document.getElementById('typing'); if(t)t.remove(); }
+
+async function executeActions(actions){
+  const results = [];
+  for(const act of actions){
+    const id = String(++msgId);
+    const res = await wsSend(act.tool, act.action, act.params||{}, id);
+    results.push({...act, result: res});
+  }
+  return results;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  MAIN SEND FUNCTION — provider adapter dispatches to correct API
+// ══════════════════════════════════════════════════════════════════════════════
+async function sendAI(){
+  if(isBusy) return;
+  const input = document.getElementById('cmd-input');
+  const txt   = input.value.trim();
+  if(!txt) return;
+
+  if(!currentProvider || (!apiKey && currentProvider !== 'bedrock')){
+    showConfigModal(false);
+    showToast('Please configure an AI provider first.','red');
+    return;
+  }
+
+  isBusy = true;
+  input.value = '';
+  addMsg('user', escHtml(txt));
+  history.push({role:'user', content:txt});
+  if(history.length > 40) history = history.slice(-30);
+  setFootStatus('THINKING...');
+  addTyping();
+
+  let plan = null;
+  try {
+    const msgs = history.slice(-6).map(h=>({role:h.role,content:h.content}));
+    const body = buildRequestBody(currentProvider, currentModel, msgs, SYSTEM_PROMPT);
+    const bodyStr = JSON.stringify(body);
+    let r;
+
+    if (PROVIDERS[currentProvider].type === 'bedrock') {
+      r = await bedrockFetch(currentModel, bodyStr);
+    } else {
+      const url     = getRequestUrl(currentProvider, currentModel, apiKey);
+      const headers = buildHeaders(currentProvider, apiKey);
+      r = await fetch(url, { method: 'POST', headers: headers, body: bodyStr });
+    }
+
+    if (!r.ok) {
+      const d = await r.json().catch(() => ({}));
+      throw new Error(formatProviderError(currentProvider, r.status, d));
+    }
+
+    const d = await r.json();
+    let raw = parseResponseContent(currentProvider, d);
+
+    raw = raw.replace(/^```json\s*/i,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
+    const jsonStart = raw.indexOf('{');
+    const jsonEnd   = raw.lastIndexOf('}');
+    if(jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) raw = raw.slice(jsonStart, jsonEnd+1);
+    plan = JSON.parse(raw);
+  } catch(err){
+    removeTyping();
+    addMsg('assistant','<span class="tag red">AI ERROR</span> '+escHtml(err.message));
+    setFootStatus('ERROR');
+    isBusy = false;
+    return;
+  }
+
+  removeTyping();
+  const speech  = plan.speech || '';
+  const actions = plan.actions || [];
+
+  if(!wsOnline){
+    const actionTags = actions.map(a=>'<span class="tag yellow">'+a.tool.toUpperCase()+': '+a.action+'</span>').join(' ');
+    addMsg('assistant',
+      '<span class="tag red">BACKEND OFFLINE</span> Start the server first: <code>python jarvis.py</code><br><br>'
+      + escHtml(speech) + '<br><br>Would execute: ' + (actionTags || 'no actions')
+    );
+    history.push({role:'assistant',content:speech});
+    setFootStatus('BACKEND OFFLINE');
+    isBusy = false;
+    return;
+  }
+
+  if(actions.length === 0){
+    addMsg('assistant', speech.replace(/\n/g,'<br>'));
+    history.push({role:'assistant',content:speech});
+    setFootStatus('READY'); isBusy = false; return;
+  }
+
+  addTyping();
+  const results = await executeActions(actions);
+  removeTyping();
+
+  let resultLines = [], allOk = true;
+  for(const r of results){
+    if(r.result && r.result.ok === false){
+      allOk = false;
+      resultLines.push('❌ ' + r.tool + '.' + r.action + ': ' + (r.result.error || 'Failed'));
+    } else if(r.result && r.result.result !== undefined){
+      const val = r.result.result;
+      if(typeof val === 'string') resultLines.push('✅ ' + val);
+      else if(Array.isArray(val)) resultLines.push('✅ '+r.tool+'.'+r.action+': '+val.length+' items\n'+JSON.stringify(val,null,2).slice(0,500));
+      else resultLines.push('✅ '+r.tool+'.'+r.action+':\n'+JSON.stringify(val,null,2).slice(0,500));
+    } else {
+      resultLines.push('✅ '+r.tool+'.'+r.action+': done');
+    }
+  }
+
+  const actionTags = actions.map(a=>'<span class="tag">'+a.tool.toUpperCase()+'</span>').join(' ');
+  const statusTag  = allOk ? '<span class="tag">EXECUTED</span>' : '<span class="tag red">PARTIAL ERROR</span>';
+  addMsg('assistant', statusTag + ' ' + actionTags + '<br><br>' + speech.replace(/\n/g,'<br>'), resultLines.join('\n'));
+  history.push({role:'assistant', content: speech + '\n' + resultLines.join('\n')});
+  setFootStatus('READY');
+  isBusy = false;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  VOICE
+// ══════════════════════════════════════════════════════════════════════════════
+function toggleVoice(){
+  const btn = document.getElementById('btn-voice');
+  if(!('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)){
+    addMsg('assistant','<span class="tag red">VOICE MODULE</span><br>Use Chrome or Edge for voice commands.'); return;
+  }
+  if(isListening){ recog?.stop(); isListening=false; btn.classList.remove('listening'); return; }
+  const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
+  recog = new SR(); recog.lang='en-US'; recog.continuous=false; recog.interimResults=false;
+  recog.onresult = e => { document.getElementById('cmd-input').value = e.results[0][0].transcript; isListening=false; btn.classList.remove('listening'); sendAI(); };
+  recog.onerror = recog.onend = () => { isListening=false; btn.classList.remove('listening'); };
+  recog.start(); isListening=true; btn.classList.add('listening');
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  MODULE SWITCHER
+// ══════════════════════════════════════════════════════════════════════════════
+function setModule(mod,btn){
+  document.querySelectorAll('.mod-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const map = {
+    files:'Show my home directory files', apps:'List all running applications', browser:'Open Chrome browser',
+    email:'Check my inbox for new emails', calendar:"Show today's calendar events", terminal:'Open a terminal window',
+    system:'Show full system status: CPU, memory, disk, processes', screen:'Take a screenshot of my current screen', ai:''
+  };
+  if(map[mod]) qi(map[mod]);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════════════════════════════════════
+function qi(txt){ document.getElementById('cmd-input').value=txt; sendAI(); }
+function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function setFootStatus(s){ document.getElementById('foot-status').textContent=s; }
+function showToast(msg,col){
+  col = col || 'green';
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.color       = col==='green'?'var(--hud)':'var(--hud3)';
+  t.style.borderColor = col==='green'?'rgba(10,255,204,.3)':'rgba(255,77,109,.3)';
+  t.style.background  = col==='green'?'rgba(10,255,204,.07)':'rgba(255,77,109,.07)';
+  t.style.opacity='1'; setTimeout(()=>t.style.opacity='0',3500);
+}
+
+document.getElementById('cmd-input').addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); sendAI(); }
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════════════════════════════════════════════
+renderProviderGrid();
+wsConnect();
+
+document.getElementById('chat-wrap').addEventListener('scroll', ()=>{
+  const btn = document.getElementById('scroll-btn');
+  if(isAtBottom()) btn.classList.remove('visible'); else btn.classList.add('visible');
+});
+
+const savedConfig = loadConfig();
+if (savedConfig) {
+  if (savedConfig.awsAccessKey) { awsAccessKey = savedConfig.awsAccessKey; awsSecretKey = savedConfig.awsSecretKey; awsRegion = savedConfig.awsRegion || 'us-east-1'; }
+  if (savedConfig.azureEndpoint) { azureEndpoint = savedConfig.azureEndpoint; azureDeployment = savedConfig.azureDeployment || ''; }
+  applyConfig(savedConfig.provider, savedConfig.key, savedConfig.model);
+}
+showConfigModal(!savedConfig ? false : true);
+</script>
+</body>
+</html>
