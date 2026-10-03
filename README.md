@@ -1,67 +1,99 @@
-# J.A.R.V.I.S — Personal AI Operating System
+<div align="center">
 
-> *"Just A Rather Very Intelligent System"*
-> A real, local AI OS that controls your computer — opens apps, writes emails, manages files, browses the web, runs code — all by voice or text.
+<img src="docs/banner.svg" alt="J.A.R.V.I.S" width="100%"/>
+
+<a href="https://github.com/harisaltaf151-bit/jarvis-ai-os">
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&pause=1200&color=22D3EE&center=true&vCenter=true&width=760&lines=%22Hey+JARVIS%2C+open+VS+Code%22;%22Find+all+PDFs+modified+this+week%22;%22Write+an+email+to+John+about+the+meeting%22;%22Show+CPU+and+RAM+usage%22" alt="Typing animation" />
+</a>
+
+<br/>
+
+![Python](https://img.shields.io/badge/Python_3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Claude](https://img.shields.io/badge/Claude_AI-D97757?style=for-the-badge&logo=anthropic&logoColor=white)
+![WebSockets](https://img.shields.io/badge/WebSockets-010101?style=for-the-badge&logo=socketdotio&logoColor=white)
+![Selenium](https://img.shields.io/badge/Selenium-43B02A?style=for-the-badge&logo=selenium&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-22d3ee?style=for-the-badge)
+
+![Stars](https://img.shields.io/github/stars/harisaltaf151-bit/jarvis-ai-os?style=flat-square&color=fbbf24)
+![Forks](https://img.shields.io/github/forks/harisaltaf151-bit/jarvis-ai-os?style=flat-square&color=60a5fa)
+![Last commit](https://img.shields.io/github/last-commit/harisaltaf151-bit/jarvis-ai-os?style=flat-square&color=34d399)
+
+</div>
 
 ---
 
-## What It Does
+## 🤖 What is JARVIS?
 
-| Capability | Examples |
-|---|---|
-| 🖥 **App Control** | "Open VS Code", "Close Spotify", "Set volume to 50%" |
-| 📁 **File Management** | "Find all PDFs modified this week", "Zip my Documents folder", "Move screenshots to Archive" |
-| 🌐 **Browser Automation** | "Search for AI news on Google", "Open YouTube and search lo-fi", "Take a screenshot of this page" |
-| ✉️ **Email** | "Write an email to John about the meeting", "Show my unread emails", "Reply to Alice" |
-| 📅 **Calendar** | "Schedule a team standup tomorrow at 10am", "Show today's events", "Remind me in 30 minutes" |
-| ⌨️ **Terminal** | "Run this Python script", "Install numpy", "Ping google.com" |
-| 📸 **Screen Control** | "Take a screenshot", "Click the submit button", "Type this text" |
-| 📊 **System Monitor** | "Show CPU and RAM usage", "What's eating my memory?", "Kill process X" |
-| 🔔 **Notifications** | Desktop alerts, scheduled reminders, morning briefings |
-| 🎤 **Voice Control** | Wake word "Hey JARVIS" → speak your command |
-| 🔌 **Plugins** | Drop a `.py` file into `~/.jarvis/plugins/` — auto-loaded |
+A real, local AI OS that controls your computer. It opens apps, writes emails, manages files, browses the web and runs code, all by **voice or text**.
 
 ---
 
-## Quick Start (3 steps)
+## ✨ What It Does
 
-### Step 1 — Clone & Install
+| | Capability | Examples |
+|---|---|---|
+| 🖥 | **App Control** | "Open VS Code", "Close Spotify", "Set volume to 50%" |
+| 📁 | **File Management** | "Find all PDFs modified this week", "Zip my Documents folder" |
+| 🌐 | **Browser Automation** | "Search for AI news on Google", "Open YouTube and search lo-fi" |
+| ✉️ | **Email** | "Write an email to John about the meeting", "Show my unread emails" |
+| 📅 | **Calendar** | "Schedule a team standup tomorrow at 10am", "Remind me in 30 minutes" |
+| ⌨️ | **Terminal** | "Run this Python script", "Install numpy", "Ping google.com" |
+| 📸 | **Screen Control** | "Take a screenshot", "Click the submit button", "Type this text" |
+| 📊 | **System Monitor** | "Show CPU and RAM usage", "What's eating my memory?" |
+| 🔔 | **Notifications** | Desktop alerts, scheduled reminders, morning briefings |
+| 🎤 | **Voice Control** | Wake word "Hey JARVIS" → speak your command |
+| 🔌 | **Plugins** | Drop a `.py` file into `~/.jarvis/plugins/`, auto-loaded |
+
+---
+
+## 🚀 Quick Start (3 steps)
+
+### Step 1: Clone and install
 
 ```bash
-git clone https://github.com/yourname/jarvis-ai-os
+git clone https://github.com/harisaltaf151-bit/jarvis-ai-os
 cd jarvis-ai-os
 pip install -r requirements.txt
 ```
 
-Or install deps manually:
+<details>
+<summary>Or install dependencies manually</summary>
+
 ```bash
 pip install websockets aiohttp anthropic psutil selenium webdriver-manager pyautogui pillow icalendar python-dotenv pyttsx3 SpeechRecognition
 ```
 
-### Step 2 — Configure
+</details>
+
+### Step 2: Configure
 
 ```bash
 python jarvis.py --setup
 ```
 
-The setup wizard will ask for:
-- Your **Anthropic API key** (get one at [console.anthropic.com](https://console.anthropic.com))
-- **Email credentials** (optional — for email tools)
+The setup wizard asks for:
+- Your **Anthropic API key** from [console.anthropic.com](https://console.anthropic.com)
+- **Email credentials** (optional, for email tools)
 - Server ports (defaults: WS=8765, HTTP=8766)
 
-Or copy `.env.example` → `.env` and fill it in manually.
+Or copy `.env.example` to `.env` and fill it in manually.
 
-### Step 3 — Launch
+### Step 3: Launch
 
 ```bash
 python jarvis.py
 ```
 
-This starts the backend server AND opens the UI in your browser automatically.
+This starts the backend server and opens the UI in your browser automatically.
 
 ---
 
-## Architecture
+## 🏗 How a command flows
+
+<img src="docs/flow.svg" alt="Command flow" width="100%"/>
+
+<details>
+<summary><b>Project structure (click to expand)</b></summary>
 
 ```
 jarvis/
@@ -97,53 +129,41 @@ jarvis/
     └── test_all.py         ← Full test suite
 ```
 
-### How a command flows
-
-```
-User types/speaks  →  ui/index.html
-        │
-        ▼  WebSocket (ws://localhost:8765)
-  core/server.py
-        │
-        ▼  natural language → structured tool call
-  core/brain.py  (Claude API)
-        │
-        ▼  dispatches to the right tool
-  tools/*.py
-        │
-        ▼  result back to UI
-  ui/index.html  (renders response)
-```
+</details>
 
 ---
 
-## Voice Commands
+## 🎤 Voice Commands
 
-JARVIS supports two voice modes:
+**1. Browser mic** (built into the UI, Chrome/Edge only): click the 🎤 button and speak. Powered by the Web Speech API.
 
-**1. Browser mic** (built into the UI — Chrome/Edge only):
-- Click the 🎤 button in the UI
-- Speak your command
-- Powered by Web Speech API
+**2. Wake word mode** (Python, works in the background):
 
-**2. Wake word mode** (Python — works in background):
 ```python
 from tools.voice_module import VoiceModule
 vm = VoiceModule(wake_word="hey jarvis")
 vm.start_wake_word_loop(on_command_cb=my_handler)
 ```
-- Say **"Hey JARVIS"** → it wakes up and listens
-- Supports Google STT (online) or **Whisper** (fully offline)
 
-**For offline voice** (no internet needed):
+Say **"Hey JARVIS"** and it wakes up and listens. Supports Google STT (online) or **Whisper** (fully offline).
+
+<details>
+<summary>Offline voice setup</summary>
+
 ```bash
 pip install openai-whisper pyaudio
 ```
+
 Then set `JARVIS_STT_ENGINE=whisper` in `.env`.
+
+</details>
 
 ---
 
-## Email Setup
+## 📚 More Documentation
+
+<details>
+<summary><b>✉️ Email setup (Gmail / Outlook)</b></summary>
 
 ### Gmail
 1. Enable 2-Factor Authentication on your Google account
@@ -161,6 +181,7 @@ IMAP_PORT="993"
 ```
 
 ### Outlook / Office 365
+
 ```
 SMTP_HOST="smtp.office365.com"
 SMTP_PORT="587"
@@ -168,14 +189,13 @@ IMAP_HOST="outlook.office365.com"
 IMAP_PORT="993"
 ```
 
----
+</details>
 
-## Automation Scripts
-
-Run pre-built automations from the command line:
+<details>
+<summary><b>⚙️ Automation scripts</b></summary>
 
 ```bash
-# Morning briefing — system health + calendar + inbox
+# Morning briefing: system health + calendar + inbox
 python scripts/automations.py morning
 
 # Preview what cleanup would do (dry run)
@@ -201,6 +221,7 @@ python scripts/automations.py health
 ```
 
 **Schedule with cron (macOS/Linux):**
+
 ```bash
 # Morning briefing every day at 8am
 0 8 * * * cd /path/to/jarvis && python scripts/automations.py morning
@@ -210,14 +231,16 @@ python scripts/automations.py health
 ```
 
 **Schedule with Task Scheduler (Windows):**
+
 ```
 Action: python C:\jarvis\scripts\automations.py morning
 Trigger: Daily at 8:00 AM
 ```
 
----
+</details>
 
-## Writing Plugins
+<details>
+<summary><b>🔌 Writing plugins</b></summary>
 
 Drop a file named `plugin_*.py` into `~/.jarvis/plugins/`:
 
@@ -239,22 +262,23 @@ class MyPlugin:
 ```
 
 JARVIS auto-loads it on startup. Call it via the WebSocket:
+
 ```json
 {"type": "command", "tool": "myapp", "action": "greet", "params": {"name": "Stark"}}
 ```
 
 Or install a plugin from a URL:
+
 ```python
 from core.plugin_engine import PluginEngine
 pe = PluginEngine()
 pe.install_from_url("https://example.com/plugin_weather.py")
 ```
 
----
+</details>
 
-## REST API
-
-The HTTP server at `localhost:8766` accepts POST requests:
+<details>
+<summary><b>📡 REST API (localhost:8766)</b></summary>
 
 ```bash
 # Check health
@@ -274,11 +298,10 @@ curl -X POST http://localhost:8766/command \
   -d '{"tool": "terminal", "action": "run_python", "params": {"code": "print(42)"}}'
 ```
 
----
+</details>
 
-## WebSocket API
-
-Connect to `ws://localhost:8765`:
+<details>
+<summary><b>🔗 WebSocket API (ws://localhost:8765)</b></summary>
 
 ```javascript
 const ws = new WebSocket('ws://localhost:8765');
@@ -296,9 +319,10 @@ ws.send(JSON.stringify({
 ws.send(JSON.stringify({ type: "system_stats" }));
 ```
 
----
+</details>
 
-## Running Tests
+<details>
+<summary><b>🧪 Running tests</b></summary>
 
 ```bash
 # Run all tests
@@ -313,9 +337,10 @@ python tests/test_all.py notify
 python tests/test_all.py plugins
 ```
 
----
+</details>
 
-## Platform Notes
+<details>
+<summary><b>💻 Platform notes</b></summary>
 
 | Feature | Windows | macOS | Linux |
 |---|---|---|---|
@@ -329,41 +354,49 @@ python tests/test_all.py plugins
 | Voice TTS | ✅ SAPI | ✅ NSSpeech | ✅ espeak |
 | Voice STT | ✅ | ✅ | ✅ |
 
-**Linux headless note:** PyAutoGUI needs a display. For servers use `Xvfb`:
+**Linux headless:** PyAutoGUI needs a display. For servers use `Xvfb`:
+
 ```bash
 Xvfb :99 -screen 0 1920x1080x24 &
 DISPLAY=:99 python jarvis.py
 ```
 
----
+</details>
 
-## Troubleshooting
+<details>
+<summary><b>🐛 Troubleshooting</b></summary>
 
 **`ANTHROPIC_API_KEY not set`**
-→ Run `python jarvis.py --setup` or create `.env` from `.env.example`
+Run `python jarvis.py --setup` or create `.env` from `.env.example`.
 
 **`No browser driver found`**
-→ `pip install webdriver-manager` — it auto-installs ChromeDriver
+Run `pip install webdriver-manager`. It auto-installs ChromeDriver.
 
 **`pyautogui` / screen tools failing**
-→ macOS: grant Accessibility + Screen Recording permissions in System Preferences
-→ Windows: run as Administrator if needed
+- macOS: grant Accessibility + Screen Recording permissions in System Settings
+- Windows: run as Administrator if needed
 
 **Voice not working**
-→ `pip install SpeechRecognition pyaudio pyttsx3`
-→ macOS: `brew install portaudio` before pyaudio
-→ Linux: `sudo apt-get install python3-pyaudio portaudio19-dev`
+- `pip install SpeechRecognition pyaudio pyttsx3`
+- macOS: `brew install portaudio` before pyaudio
+- Linux: `sudo apt-get install python3-pyaudio portaudio19-dev`
 
 **Email auth errors**
-→ Gmail: make sure you're using an **App Password**, not your regular password
-→ Check that IMAP is enabled in Gmail settings → See all settings → Forwarding and POP/IMAP
+- Gmail: use an **App Password**, not your regular password
+- Make sure IMAP is enabled in Gmail settings → See all settings → Forwarding and POP/IMAP
+
+</details>
 
 ---
 
-## License
+<div align="center">
 
-MIT — do whatever you want with it.
+### 👤 Built by Muhammad Haris
 
----
+[![GitHub](https://img.shields.io/badge/GitHub-harisaltaf151--bit-181717?style=for-the-badge&logo=github)](https://github.com/harisaltaf151-bit)
 
-*Built with Claude Sonnet 4 · Python 3.11+ · websockets · aiohttp · Selenium · PyAutoGUI*
+*Built with Claude · Python 3.11+ · websockets · aiohttp · Selenium · PyAutoGUI*
+
+MIT License · ⭐ **If you like this project, give it a star!** ⭐
+
+</div>
